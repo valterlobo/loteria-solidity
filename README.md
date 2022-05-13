@@ -4,6 +4,8 @@
 - 1 - npm install
 - 2 - npx hardhat compile
 - 3- npx hardhat test
+# Deploy 
+   copy .env.example to .env and put your key on .env file. 
 
 # Advanced Sample Hardhat Project
 
