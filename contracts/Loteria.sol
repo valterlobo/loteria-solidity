@@ -9,7 +9,7 @@ contract Loteria {
     address payable private ganhador;
     uint256 private constant VALOR_APOSTA = .0001 ether;
     uint256 private constant VALOR_TAXA = .00001 ether;
-    bool  private reEntrancyMutex = false;
+    bool private reEntrancyMutex = false;
     event NovaAposta(address jogador, uint256 valor);
     event SorteadoVencedor(address vencedor, uint256 valorGanho);
     enum States {
@@ -42,7 +42,7 @@ contract Loteria {
     }
 
     function sortear() external {
-        require(!reEntrancyMutex , "DONO DA BANCA-rentrancy");
+        require(!reEntrancyMutex, "DONO DA BANCA-rentrancy");
         require(msg.sender == donoBanca, "SOMENTE DONO DA BANCA");
         require(state == States.Fechada, "SOMENTE BANCA FECHADA");
         require(jogadores.length > 0, "NAO EXISTE APOSTADORES");
@@ -55,20 +55,23 @@ contract Loteria {
         jogadores = new address[](0);
         ganhador.transfer(valores);
         reEntrancyMutex = false;
-    
+
         console.log("GANHADOR: %s valor: %s", ganhador, valores);
         emit SorteadoVencedor(ganhador, valores);
-     
     }
 
-    function apostaFechar() external {
+    function apostaFechamento() external {
         require(msg.sender == donoBanca, "SOMENTE DONO DA BANCA");
         state = States.Fechada;
     }
 
-    function apostaAberta() external {
+    function apostaAbertura() external {
         require(msg.sender == donoBanca, "SOMENTE DONO DA BANCA");
         state = States.Aberta;
+    }
+
+    function aberta() public view returns (bool) {
+        return (state == States.Aberta);
     }
 
     function apostaValor() public pure returns (uint256) {

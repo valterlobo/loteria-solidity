@@ -58,7 +58,7 @@ describe("Loteria contrato", function () {
 
       const loteriaSigner = hardhatLoteria.connect(donoBanca);
       const totalSorteio = await hardhatLoteria.apostaTotal();
-      await loteriaSigner.apostaFechar();
+      await loteriaSigner.apostaFechamento();
       await loteriaSigner.sortear();
       const ganhador = await hardhatLoteria.apostaGanhador();
 
@@ -92,7 +92,7 @@ describe("Loteria contrato", function () {
       });
 
       const totalSorteio = await hardhatLoteria.apostaTotal();
-      await loteriaSigner.apostaFechar();
+      await loteriaSigner.apostaFechamento();
       await loteriaSigner.sortear();
       const ganhador = await hardhatLoteria.apostaGanhador();
 
@@ -105,7 +105,7 @@ describe("Loteria contrato", function () {
       });
 
       // 2 rodada
-      await loteriaSigner.apostaAberta();
+      await loteriaSigner.apostaAbertura();
       mapApostadores = new Map();
 
       apostadores.forEach((apostador) => {
@@ -125,7 +125,7 @@ describe("Loteria contrato", function () {
       });
 
       const _totalSorteio = await hardhatLoteria.apostaTotal();
-      await loteriaSigner.apostaFechar();
+      await loteriaSigner.apostaFechamento();
       await loteriaSigner.sortear();
 
       const apostadores2Rodada = await hardhatLoteria.apostadores();
@@ -159,19 +159,35 @@ describe("Loteria contrato", function () {
       const _apostadores = await hardhatLoteria.apostadores();
       expect(_apostadores.length).to.equal(19);
     });
+
+    it("SorteioBancaAberta", async function () {
+      const mapApostadores = new Map();
+      const loteriaSigner = hardhatLoteria.connect(donoBanca);
+
+      apostadores.forEach((apostador) => {
+        const txAposta = hardhatLoteria.connect(apostador).apostar({
+          value: ethers.utils.parseEther(valorAposta),
+        });
+
+        txAposta
+          .then((result) => {
+            // console.log(result.from);
+            provider.getBalance(result.from).then((balance) => {
+              mapApostadores.set(result.from, balance);
+            });
+          })
+          .catch(function (error) {
+            expect.assert.fail(error);
+          });
+      });
+      // verificar se esta aberta
+      const _aberta = await hardhatLoteria.aberta();
+      expect(_aberta).to.equal(true);
+      // fechamento da aposta
+      await loteriaSigner.apostaFechamento();
+      // verificar se esta  fechada
+      const _fechada = await hardhatLoteria.aberta();
+      expect(_fechada).to.equal(false);
+    });
   });
 });
-
-function printInfoBalance(
-  totalSorteio,
-  mapApostadores,
-  ganhador,
-  saldoGanhador
-) {
-  console.log(totalSorteio);
-  console.log(mapApostadores.get(ganhador));
-  console.log(saldoGanhador);
-  const balanceInEthGanhador = ethers.utils.formatEther(saldoGanhador);
-  console.log(`balance ganhador ? : ${balanceInEthGanhador} ETH`);
-  console.log(mapApostadores);
-}
