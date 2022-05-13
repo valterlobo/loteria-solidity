@@ -1,3 +1,14 @@
+
+# Install 
+*obs node version 16* 
+- 1 - npm install
+- 2 - npx hardhat compile
+- 3- npx hardhat test
+# Deploy 
+   - copy .env.example to .env and put your key on .env file. 
+   - run cmd : npx hardhat run scripts/deploy.js --network rinkeby 
+    
+
 # Advanced Sample Hardhat Project
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
