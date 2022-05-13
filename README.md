@@ -6,6 +6,8 @@
 - 3- npx hardhat test
 # Deploy 
    copy .env.example to .env and put your key on .env file. 
+   run cmd : npx hardhat run scripts/deploy.js --network rinkeby 
+    
 
 # Advanced Sample Hardhat Project
 
