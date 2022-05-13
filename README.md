@@ -1,9 +1,9 @@
 
 # Install 
-*obs node version 16 
- 1 - npm install 
- 2 - npx hardhat compile
- 3- npx hardhat test
+*obs node version 16* 
+1 - npm install
+2 - npx hardhat compile
+3- npx hardhat test
 
 # Advanced Sample Hardhat Project
 
