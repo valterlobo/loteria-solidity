@@ -14,7 +14,8 @@ contract Loteria {
     event SorteadoVencedor(address vencedor, uint256 valorGanho);
     enum States {
         Aberta,
-        Fechada
+        Fechada,
+        Sorteio 
     }
 
     States public state = States.Aberta;
@@ -68,6 +69,7 @@ contract Loteria {
     function apostaAbertura() external {
         require(msg.sender == donoBanca, "SOMENTE DONO DA BANCA");
         state = States.Aberta;
+        ganhador = payable(0);
     }
 
     function aberta() public view returns (bool) {
