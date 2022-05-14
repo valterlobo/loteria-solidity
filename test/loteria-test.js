@@ -35,7 +35,8 @@ describe("Loteria contrato", function () {
           value: ethers.utils.parseEther(valorAposta),
         });
       });
-      expect(await hardhatLoteria.apostaTotal()).to.equal(totalApostas);
+      const premioCalc = totalApostas - totalApostas.div(10);
+      expect(await hardhatLoteria.calcularPremio()).to.equal(premioCalc);
     });
 
     it("Sorteio", async function () {
@@ -57,7 +58,7 @@ describe("Loteria contrato", function () {
       });
 
       const loteriaSigner = hardhatLoteria.connect(donoBanca);
-      const totalSorteio = await hardhatLoteria.apostaTotal();
+      const totalSorteio = await hardhatLoteria.calcularPremio();
       await loteriaSigner.apostaFechamento();
       await loteriaSigner.sortear();
       const ganhador = await hardhatLoteria.apostaGanhador();
@@ -66,72 +67,6 @@ describe("Loteria contrato", function () {
       expect(_apostadores.length).to.equal(0);
       provider.getBalance(ganhador).then((balance) => {
         const saldoGanhador = mapApostadores.get(ganhador).add(totalSorteio);
-        expect(saldoGanhador).to.equal(balance);
-        // printInfoBalance(totalSorteio, mapApostadores, ganhador, saldoGanhador);
-      });
-    });
-
-    it("SorteioRodadas", async function () {
-      let mapApostadores = new Map();
-      const loteriaSigner = hardhatLoteria.connect(donoBanca);
-
-      apostadores.forEach((apostador) => {
-        const txAposta = hardhatLoteria.connect(apostador).apostar({
-          value: ethers.utils.parseEther(valorAposta),
-        });
-
-        txAposta
-          .then((result) => {
-            provider.getBalance(apostador.address).then((balance) => {
-              mapApostadores.set(apostador.address, balance);
-            });
-          })
-          .catch(function (error) {
-            expect.assert.fail(error);
-          });
-      });
-
-      const totalSorteio = await hardhatLoteria.apostaTotal();
-      await loteriaSigner.apostaFechamento();
-      await loteriaSigner.sortear();
-      const ganhador = await hardhatLoteria.apostaGanhador();
-
-      const _apostadores = await hardhatLoteria.apostadores();
-      expect(_apostadores.length).to.equal(0);
-      provider.getBalance(ganhador).then((balance) => {
-        const saldoGanhador = mapApostadores.get(ganhador).add(totalSorteio);
-        expect(saldoGanhador).to.equal(balance);
-        // printInfoBalance(totalSorteio, mapApostadores, ganhador, saldoGanhador);
-      });
-
-      // 2 rodada
-      await loteriaSigner.apostaAbertura();
-      mapApostadores = new Map();
-
-      apostadores.forEach((apostador) => {
-        const txAposta = hardhatLoteria.connect(apostador).apostar({
-          value: ethers.utils.parseEther(valorAposta),
-        });
-
-        txAposta
-          .then((result) => {
-            provider.getBalance(apostador.address).then((balance) => {
-              mapApostadores.set(apostador.address, balance);
-            });
-          })
-          .catch(function (error) {
-            expect.assert.fail(error);
-          });
-      });
-
-      const _totalSorteio = await hardhatLoteria.apostaTotal();
-      await loteriaSigner.apostaFechamento();
-      await loteriaSigner.sortear();
-
-      const apostadores2Rodada = await hardhatLoteria.apostadores();
-      expect(apostadores2Rodada.length).to.equal(0);
-      provider.getBalance(ganhador).then((balance) => {
-        const saldoGanhador = mapApostadores.get(ganhador).add(_totalSorteio);
         expect(saldoGanhador).to.equal(balance);
         // printInfoBalance(totalSorteio, mapApostadores, ganhador, saldoGanhador);
       });
@@ -171,7 +106,6 @@ describe("Loteria contrato", function () {
 
         txAposta
           .then((result) => {
-            // console.log(result.from);
             provider.getBalance(result.from).then((balance) => {
               mapApostadores.set(result.from, balance);
             });
@@ -230,6 +164,43 @@ describe("Loteria contrato", function () {
       const txError = () => hardhatLoteria.apostaGanhador();
       // verificar se ganhador  foi zerado - nao seria igual a zero por que foi zerado - ocorre um error no contrato
       expect(txError()).not.equal(ethers.constants.AddressZero);
+    });
+
+    it("SorteioValorPremio", async function () {
+      const mapApostadores = new Map();
+      const loteriaSigner = hardhatLoteria.connect(donoBanca);
+
+      apostadores.forEach((apostador) => {
+        const txAposta = hardhatLoteria.connect(apostador).apostar({
+          value: ethers.utils.parseEther(valorAposta),
+        });
+
+        txAposta
+          .then((result) => {
+            provider.getBalance(result.from).then((balance) => {
+              mapApostadores.set(result.from, balance);
+            });
+          })
+          .catch(function (error) {
+            expect.assert.fail(error);
+          });
+      });
+      // verificar se esta aberta
+      const _aberta = await hardhatLoteria.aberta();
+      expect(_aberta).to.equal(true);
+
+      // fechamento da aposta
+      await loteriaSigner.apostaFechamento();
+      // verificar se esta  fechada
+      const _fechada = await hardhatLoteria.aberta();
+      expect(_fechada).to.equal(false);
+
+      // sorteio
+      const txSorteio = await loteriaSigner.sortear();
+      await txSorteio.wait();
+
+      const ganhador = await hardhatLoteria.apostaGanhador();
+      expect(ganhador).not.equal(ethers.constants.AddressZero);
     });
   });
 });
