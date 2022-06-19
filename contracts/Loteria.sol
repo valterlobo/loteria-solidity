@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 import "hardhat/console.sol";
 
@@ -9,7 +9,7 @@ contract Loteria {
     address payable private ganhador;
     uint256 private constant VALOR_APOSTA = .0001 ether;
     uint256 private constant VALOR_TAXA = .00001 ether;
-    bool private reEntrancyMutex = false;
+    //bool private reEntrancyMutex = false;
     event NovaAposta(address jogador, uint256 valor);
     event SorteadoVencedor(address vencedor, uint256 valorGanho);
     enum States {
@@ -30,6 +30,7 @@ contract Loteria {
      ***/
 
     constructor() payable {
+        require(address(msg.sender) != address(0), "ADDRESS ZERO");
         donoBanca = msg.sender;
     }
 
@@ -59,7 +60,7 @@ contract Loteria {
     }
 
     function sortear() external {
-        require(!reEntrancyMutex, "DONO DA BANCA-rentrancy");
+        //require(!reEntrancyMutex, "DONO DA BANCA-rentrancy");
         require(msg.sender == donoBanca, "SOMENTE DONO DA BANCA");
         require(state == States.Fechada, "SOMENTE BANCA FECHADA");
         require(jogadores.length > 0, "NAO EXISTE APOSTADORES");
@@ -67,13 +68,12 @@ contract Loteria {
         uint256 idxGanhador = sorteio();
         uint256 valorPremio = calcularPremio();
         ganhador = payable(jogadores[idxGanhador]);
-        reEntrancyMutex = true;
+        //reEntrancyMutex = true;
         jogadores = new address[](0);
-        ganhador.transfer(valorPremio);
-        reEntrancyMutex = false;
-
         console.log("GANHADOR: %s valor: %s", ganhador, valorPremio);
         emit SorteadoVencedor(ganhador, valorPremio);
+        ganhador.transfer(valorPremio);
+        //reEntrancyMutex = false;
     }
 
     function apostaFechamento() external {
@@ -88,22 +88,25 @@ contract Loteria {
     }
 
     function apostaRetirada(uint256 valor) external {
+        require(address(msg.sender) != address(0), "ADDRESS ZERO");
         require(msg.sender == donoBanca, "SOMENTE DONO DA BANCA");
+        require(valor > 0, "MAIOR QUE ZERO");
         require(address(this).balance > valor, "SALDO INSUFICIENTE");
 
         address payable _to = payable(msg.sender);
+        require(_to != address(0), "ADDRESS ZERO");
         _to.transfer(valor);
     }
 
-    function aberta() public view returns (bool) {
+    function aberta() external view returns (bool) {
         return (state == States.Aberta);
     }
 
-    function apostaValor() public pure returns (uint256) {
+    function apostaValor() external pure returns (uint256) {
         return VALOR_APOSTA;
     }
 
-    function apostaTaxa() public pure returns (uint256) {
+    function apostaTaxa() external pure returns (uint256) {
         return VALOR_TAXA;
     }
 
@@ -117,25 +120,24 @@ contract Loteria {
         return premio;
     }
 
-    function apostaTotal() public view returns (uint256) {
+    function apostaTotal() external view returns (uint256) {
         if (jogadores.length > 0) {
             return jogadores.length * VALOR_APOSTA;
         }
         return 0;
     }
 
-    function apostaDonoBanca() public view returns (address) {
+    function apostaDonoBanca() external view returns (address) {
         return donoBanca;
     }
 
-    function apostadores() public view returns (address[] memory) {
+    function apostadores() external view returns (address[] memory) {
         address[] memory _apostadores = jogadores;
         return _apostadores;
     }
 
-    function apostaGanhador() public view returns (address) {
+    function apostaGanhador() external view returns (address) {
         require(ganhador > address(0), "APOSTADOR NAO DEFINIDO");
-
         return ganhador;
     }
 }

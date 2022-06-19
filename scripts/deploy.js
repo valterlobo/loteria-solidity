@@ -17,6 +17,7 @@ async function main() {
   const Loteria = await hre.ethers.getContractFactory("Loteria");
   const loteria = await Loteria.deploy({
     value: hre.ethers.utils.parseEther("0.01"),
+    gasLimit: 400000,
   });
 
   await loteria.deployed();
